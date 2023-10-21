@@ -1,0 +1,58 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Transaction
+{
+    public int InvestorID { get; set; }
+    public int SyndicateID { get; set; }
+    public decimal Amount { get; set; }
+}
+
+class InvestorData
+{
+    public HashSet<int> UniqueSyndicates { get; } = new HashSet<int>();
+    public decimal TotalInvestment { get; set; }
+}
+
+class Program
+{
+    static void Main()
+    {
+        // Sample transactional records (You can replace this with your dataset)
+        List<Transaction> transactions = new List<Transaction>
+        {
+            new Transaction { InvestorID = 1, SyndicateID = 101, Amount = 1000 },
+            new Transaction { InvestorID = 1, SyndicateID = 102, Amount = 1500 },
+            new Transaction { InvestorID = 2, SyndicateID = 101, Amount = 2000 },
+            new Transaction { InvestorID = 2, SyndicateID = 103, Amount = 2500 },
+            new Transaction { InvestorID = 3, SyndicateID = 102, Amount = 3000 },
+            new Transaction { InvestorID = 4, SyndicateID = 101, Amount = 500 },
+            new Transaction { InvestorID = 4, SyndicateID = 104, Amount = 600 },
+        };
+
+        Dictionary<int, InvestorData> investorData = new Dictionary<int, InvestorData>();
+
+        foreach (var transaction in transactions)
+        {
+            if (!investorData.ContainsKey(transaction.InvestorID))
+            {
+                investorData[transaction.InvestorID] = new InvestorData();
+            }
+
+            investorData[transaction.InvestorID].UniqueSyndicates.Add(transaction.SyndicateID);
+            investorData[transaction.InvestorID].TotalInvestment += transaction.Amount;
+        }
+
+        var sortedInvestors = investorData
+            .OrderByDescending(kv => kv.Value.UniqueSyndicates.Count)
+            .ThenByDescending(kv => kv.Value.TotalInvestment)
+            .Take(5);
+
+        Console.WriteLine("Top 5 Investors with the Highest Number of Unique Syndicates:");
+        foreach (var (investorID, data) in sortedInvestors)
+        {
+            Console.WriteLine($"Investor ID {investorID}, Unique Syndicates: {data.UniqueSyndicates.Count}, Total Investment: ${data.TotalInvestment}");
+        }
+    }
+}

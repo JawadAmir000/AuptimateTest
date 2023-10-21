@@ -1,0 +1,107 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Transaction
+{
+    public double Amount { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
+class AlertingSystem
+{
+    private List<Transaction> transactionBuffer;
+    private int bufferSize;
+    private double thresholdAmount;
+    private double thresholdRateMultiplier;
+
+    public AlertingSystem(int bufferSize, double thresholdAmount, double thresholdRateMultiplier)
+    {
+        this.bufferSize = bufferSize;
+        this.thresholdAmount = thresholdAmount;
+        this.thresholdRateMultiplier = thresholdRateMultiplier;
+        this.transactionBuffer = new List<Transaction>(bufferSize);
+    }
+
+    public void ProcessTransaction(Transaction transaction)
+    {
+        // Check for excessive transaction amount
+        if (transaction.Amount > thresholdAmount)
+        {
+            TriggerAlert("Excessive transaction amount", transaction);
+        }
+
+        // Add the transaction to the buffer
+        transactionBuffer.Add(transaction);
+
+        // Remove transactions older than an hour
+        DateTime oneHourAgo = DateTime.Now.AddHours(-1);
+        transactionBuffer = transactionBuffer.Where(t => t.Timestamp >= oneHourAgo).ToList();
+
+        // Calculate the average transaction rate
+        double averageRate = transactionBuffer.Count / 3600.0; // 3600 seconds in an hour
+        var avg = averageRate * thresholdRateMultiplier;
+
+        // Check for a sudden spike in transaction rate
+        if (transactionBuffer.Count > avg)
+        {
+            TriggerAlert("Sudden spike in transaction rate", transaction);
+        }
+    }
+
+    private void TriggerAlert(string alertType, Transaction transaction)
+    {
+        // In a real system, this is where you would send alerts to fund managers.
+        Console.WriteLine($"{alertType} alert triggered for transaction: {transaction.Amount:C} at {transaction.Timestamp}");
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        AlertingSystem alertingSystem = new AlertingSystem(bufferSize: 1000, thresholdAmount: 1000.0, thresholdRateMultiplier: 10.0);
+
+        // Simulate transactions for testing
+        Random random = new Random();
+        for (int i = 1; i <= 20; i++)
+        {
+            var transaction = new Transaction
+            {
+                Amount = random.Next(100, 2000),
+                Timestamp = DateTime.Now
+            };
+
+            alertingSystem.ProcessTransaction(transaction);
+            System.Threading.Thread.Sleep(1000); // Simulate transactions every 1 second
+        }
+    }
+}
+
+
+Transaction Class:
+Represents a financial transaction with two properties: Amount and Timestamp.
+
+AlertingSystem Class:
+Initializes with parameters for bufferSize (size of the transaction buffer), thresholdAmount (pre-defined maximum transaction amount), and thresholdRateMultiplier (threshold for detecting a spike in transaction rate).
+Maintains a list of transactions (transactionBuffer) to store the last hour's transactions.
+The ProcessTransaction method is called for each incoming transaction and performs the following checks:
+Excessive Transaction Amount: If the transaction amount exceeds the thresholdAmount, it triggers an alert.
+Buffer Maintenance: It adds the incoming transaction to the buffer and removes older transactions (older than one hour).
+Transaction Rate Calculation: It calculates the average transaction rate within the buffer.
+Sudden Spike Detection: If the incoming transaction rate is significantly higher (e.g., 10 times) than the average rate, it triggers an alert.
+TriggerAlert Method:
+
+In a real system, this is where you would send alerts to fund managers. In the provided code, it simply prints alert messages to the console.
+Program Class (Main Method):
+
+Initializes an AlertingSystem instance with predefined parameters.
+Simulates a sequence of transactions for testing purposes.
+For each simulated transaction, it calls the ProcessTransaction method with a randomly generated amount and the current timestamp.
+There's a delay of 1 second between each simulated transaction, allowing you to observe the alerts in the console.
+The code essentially demonstrates a simplified real-time alerting system that checks incoming transactions for excessive amounts and sudden spikes in the transaction rate. When such conditions are met, it triggers alert messages. In a production system, these alerts would be sent to fund managers through various notification mechanisms.
+
+
+
+
+
